@@ -40,6 +40,7 @@ public class TestOptimizations extends TestDb {
     @Override
     public void test() throws Exception {
         deleteDb("optimizations");
+        testDeeplyNestedColumnReference();
         testConditionsStackOverflow();
         testIdentityIndexUsage();
         testFastRowIdCondition();
@@ -86,6 +87,29 @@ public class TestOptimizations extends TestDb {
         testConvertOrToIn();
         testConditionAndOrDistributiveLaw();
         deleteDb("optimizations");
+    }
+
+    private void testDeeplyNestedColumnReference() throws SQLException {
+        Connection conn = getConnection("optimizations");
+        Statement stat = conn.createStatement();
+        stat.execute("CREATE TABLE t (i int)");
+        stat.execute("CREATE TABLE u (j int)");
+        stat.execute("INSERT INTO t VALUES (1)");
+        stat.execute("INSERT INTO u VALUES (1)");
+        ResultSet rs;
+        rs = stat.executeQuery("SELECT "
+                + "  t.i,"
+                + "  ("
+                + "    SELECT MAX(j)"
+                + "    FROM ("
+                + "      SELECT j"
+                + "      FROM u"
+                + "      WHERE u.j = t.i"
+                + "    ) u"
+                + "  ) j"
+                + " FROM t");
+        rs.next();
+        conn.close();
     }
 
     private void testIdentityIndexUsage() throws Exception {
