@@ -155,6 +155,18 @@ public final class ExpressionColumn extends Expression {
         return columnResolver == null ? null : columnResolver.getTableFilter();
     }
 
+    /**
+     * Returns the query nesting level at which this column was resolved.
+     * A level of 0 indicates the column was resolved in the current query.
+     * A level of 1 indicates it was resolved in the immediate enclosing query
+     * (i.e., a correlated reference to the direct parent query), and so on.
+     *
+     * @return the query level
+     */
+    public int getQueryLevel() {
+        return queryLevel;
+    }
+
     @Override
     public void mapColumns(ColumnResolver resolver, int level, int state) {
         if (tableAlias != null && !database.equalsIdentifiers(tableAlias, resolver.getTableAlias())) {

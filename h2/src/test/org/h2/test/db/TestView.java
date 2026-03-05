@@ -50,6 +50,7 @@ public class TestView extends TestDb {
         testManyViews();
         testReferenceView();
         testViewAlterAndCommandCache();
+        testCorrelatedDerivedTable();
         deleteDb("view");
     }
 
@@ -345,6 +346,90 @@ public class TestView extends TestDb {
         assertEquals(1, rs.getInt(1));
         conn.close();
         deleteDb("view");
+    }
+
+    /**
+     * Test that correlated (lateral) derived tables work correctly.
+     * A correlated derived table is a subquery in the FROM clause that
+     * references columns from an outer query scope.
+     *
+     * @see <a href="https://github.com/h2database/h2database/issues/1934">Issue #1934</a>
+     */
+    private void testCorrelatedDerivedTable() throws SQLException {
+        Connection conn = getConnection("view");
+        Statement stat = conn.createStatement();
+        stat.execute("drop table if exists t_author");
+        stat.execute("drop table if exists t_book");
+        stat.execute("create table t_author (id int primary key, name varchar(50))");
+        stat.execute("create table t_book (id int primary key, author_id int, lang int)");
+        stat.execute("insert into t_author values (1, 'Alice'), (2, 'Bob'), (3, 'Carol')");
+        // Alice: 2 books in language 1
+        stat.execute("insert into t_book values (1, 1, 1), (2, 1, 1)");
+        // Bob: 1 book in language 1, 1 book in language 2
+        stat.execute("insert into t_book values (3, 2, 1), (4, 2, 2)");
+        // Carol: no books
+
+        // Original issue: NOT EXISTS with correlated derived table and HAVING
+        // Alice has 2 books in lang 1 → count > 1 → excluded
+        // Bob has 1 book per language → not excluded → included
+        // Carol has no books → included
+        ResultSet rs = stat.executeQuery(
+                "select a.id from t_author a " +
+                "where not exists ( " +
+                "  select 1 from ( " +
+                "    select b.lang from t_book b where b.author_id = a.id " +
+                "  ) t " +
+                "  where t.lang is not null " +
+                "  group by t.lang " +
+                "  having count(*) > 1 " +
+                ") order by a.id");
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertFalse(rs.next());
+
+        // Correlated derived table in FROM clause (implicit lateral join)
+        // Should return one row per (author, book) pair for authors with books
+        rs = stat.executeQuery(
+                "select a.id, t.lang from t_author a, " +
+                "(select b.lang from t_book b where b.author_id = a.id) t " +
+                "order by a.id, t.lang");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1)); assertEquals(1, rs.getInt(2));
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1)); assertEquals(1, rs.getInt(2));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1)); assertEquals(1, rs.getInt(2));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1)); assertEquals(2, rs.getInt(2));
+        assertFalse(rs.next());
+
+        // EXISTS with correlated derived table
+        rs = stat.executeQuery(
+                "select a.id from t_author a where exists ( " +
+                "  select 1 from (select b.lang from t_book b where b.author_id = a.id) t " +
+                ") order by a.id");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertFalse(rs.next());
+
+        // Scalar subquery with correlated derived table
+        // Count distinct languages per author
+        rs = stat.executeQuery(
+                "select a.id from t_author a where " +
+                "(select count(distinct t.lang) from " +
+                " (select b.lang from t_book b where b.author_id = a.id) t) = 1 " +
+                "order by a.id");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1)); // Alice has 2 books both in lang 1 → 1 distinct lang
+        assertFalse(rs.next());
+
+        stat.execute("drop table t_book");
+        stat.execute("drop table t_author");
+        conn.close();
     }
 
 }

@@ -1,0 +1,90 @@
+2026-03-05 14:10:41.921710Z jdbc: SESSION_PREPARE_READ_PARAMS2 0
+2026-03-05 14:10:41.924873Z jdbc: COMMAND_EXECUTE_QUERY 0
+2026-03-05 14:10:41.925192Z jdbc: RESULT_CLOSE 1
+2026-03-05 14:10:41.925212Z jdbc: COMMAND_CLOSE 0
+2026-03-05 14:10:41.925231Z jdbc: 
+/**/Connection conn803188 = DriverManager.getConnection("jdbc:h2:./data/test/TestAutoServer;AUTO_SERVER=TRUE;MV_STORE=true;MAX_COMPACT_TIME=0;TRACE_LEVEL_FILE=3;TRACE_MAX_FILE_SIZE=8;THROTTLE=1;LOCK_TIMEOUT=50;MAX_MEMORY_UNDO=3;CACHE_TYPE=SOFT_LRU;MAX_MEMORY_ROWS=100;CACHE_SIZE=0;CIPHER=AES;OPEN_NEW=TRUE", "SA", "");
+2026-03-05 14:10:41.925272Z jdbc: java.lang.Exception: Open Stack Trace
+	at org.h2.util.CloseWatcher.register(CloseWatcher.java:85)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:135)
+	at org.h2.jdbcx.JdbcDataSource.getXAConnection(JdbcDataSource.java:322)
+	at org.h2.test.jdbcx.TestXASimple.testTwoPhase(TestXASimple.java:77)
+	at org.h2.test.jdbcx.TestXASimple.testTwoPhase(TestXASimple.java:47)
+	at org.h2.test.jdbcx.TestXASimple.test(TestXASimple.java:36)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:803)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+
+org.h2.message.DbException: The connection was not closed by the application and is garbage collected [90018-249]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:217)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:134)
+	at org.h2.Driver.connect(Driver.java:59)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:681)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:229)
+	at org.h2.test.TestDb.getConnectionInternal(TestDb.java:146)
+	at org.h2.test.TestDb.getConnection(TestDb.java:31)
+	at org.h2.test.server.TestAutoServer.testSocketReadTimeout(TestAutoServer.java:146)
+	at org.h2.test.server.TestAutoServer.test(TestAutoServer.java:40)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:806)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection was not closed by the application and is garbage collected [90018-249]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 19 more
+2026-03-05 14:10:41.925435Z jdbc: java.lang.Exception: Open Stack Trace
+	at org.h2.util.CloseWatcher.register(CloseWatcher.java:85)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:135)
+	at org.h2.jdbcx.JdbcDataSource.getXAConnection(JdbcDataSource.java:322)
+	at org.h2.test.jdbcx.TestXASimple.testTwoPhase(TestXASimple.java:61)
+	at org.h2.test.jdbcx.TestXASimple.testTwoPhase(TestXASimple.java:47)
+	at org.h2.test.jdbcx.TestXASimple.test(TestXASimple.java:36)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:803)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+
+org.h2.message.DbException: The connection was not closed by the application and is garbage collected [90018-249]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:217)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:134)
+	at org.h2.Driver.connect(Driver.java:59)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:681)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:229)
+	at org.h2.test.TestDb.getConnectionInternal(TestDb.java:146)
+	at org.h2.test.TestDb.getConnection(TestDb.java:31)
+	at org.h2.test.server.TestAutoServer.testSocketReadTimeout(TestAutoServer.java:146)
+	at org.h2.test.server.TestAutoServer.test(TestAutoServer.java:40)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:806)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection was not closed by the application and is garbage collected [90018-249]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 19 more
+2026-03-05 14:10:41.925578Z jdbc: 
+/**/Statement stat592600 = conn803188.createStatement();
+2026-03-05 14:10:41.925586Z jdbc: 
+/**/conn803188.close();
+2026-03-05 14:10:41.925643Z jdbc: SESSION_HAS_PENDING_TRANSACTION 0
+2026-03-05 14:10:41.925792Z jdbc: SESSION_CLOSE 0

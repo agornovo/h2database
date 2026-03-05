@@ -1,0 +1,43 @@
+2026-03-05 14:10:42.329642Z jdbc: SESSION_PREPARE_READ_PARAMS2 0
+2026-03-05 14:10:42.330160Z jdbc: COMMAND_EXECUTE_QUERY 0
+2026-03-05 14:10:42.332896Z jdbc: RESULT_CLOSE 1
+2026-03-05 14:10:42.332928Z jdbc: COMMAND_CLOSE 0
+2026-03-05 14:10:42.332943Z jdbc: 
+/**/Connection conn803197 = DriverManager.getConnection("jdbc:h2:./data/test/TestAutoServer1;AUTO_SERVER=TRUE;MV_STORE=true;MAX_COMPACT_TIME=0;TRACE_LEVEL_FILE=3;TRACE_MAX_FILE_SIZE=8;THROTTLE=1;LOCK_TIMEOUT=50;MAX_MEMORY_UNDO=3;CACHE_TYPE=SOFT_LRU;MAX_MEMORY_ROWS=100;CACHE_SIZE=0;CIPHER=AES;OPEN_NEW=TRUE", "SA", "");
+2026-03-05 14:10:42.333025Z jdbc: 
+/**/Statement stat592608 = conn803197.createStatement();
+2026-03-05 14:10:42.333048Z jdbc: 
+/**/stat592608.execute("CREATE LOCAL TEMPORARY LINKED TABLE T('', 'jdbc:h2:./data/test/TestAutoServer2;MV_STORE=true;MAX_COMPACT_TIME=0;TRACE_LEVEL_FILE=3;TRACE_MAX_FILE_SIZE=8;THROTTLE=1;LOCK_TIMEOUT=50;MAX_MEMORY_UNDO=3;CACHE_TYPE=SOFT_LRU;MAX_MEMORY_ROWS=100;CACHE_SIZE=0;CIPHER=AES', 'sa', 'filePassword 123', 'TEST')");
+2026-03-05 14:10:42.333061Z jdbc: SESSION_PREPARE_READ_PARAMS2 2
+2026-03-05 14:10:42.333309Z jdbc: COMMAND_EXECUTE_UPDATE 2
+2026-03-05 14:10:42.333993Z jdbc: SESSION_PREPARE_READ_PARAMS2 3
+2026-03-05 14:10:42.334234Z jdbc: COMMAND_EXECUTE_QUERY 3
+2026-03-05 14:10:42.334466Z jdbc: RESULT_CLOSE 4
+2026-03-05 14:10:42.334513Z jdbc: COMMAND_CLOSE 2
+2026-03-05 14:10:42.337707Z jdbc: 
+/**/stat592608.execute("INSERT INTO T (ID) VALUES('abc')");
+2026-03-05 14:10:42.337730Z jdbc: SESSION_PREPARE_READ_PARAMS2 5
+2026-03-05 14:10:42.337961Z jdbc: removing server because of exception
+java.io.EOFException
+	at java.base/java.io.DataInputStream.readInt(DataInputStream.java:386)
+	at org.h2.value.Transfer.readInt(Transfer.java:304)
+	at org.h2.engine.SessionRemote.done(SessionRemote.java:623)
+	at org.h2.command.CommandRemote.prepare(CommandRemote.java:82)
+	at org.h2.command.CommandRemote.<init>(CommandRemote.java:55)
+	at org.h2.engine.SessionRemote.prepareCommand(SessionRemote.java:494)
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1161)
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245)
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231)
+	at org.h2.test.server.TestAutoServer.testLinkedLocalTablesWithAutoServerReconnect(TestAutoServer.java:217)
+	at org.h2.test.server.TestAutoServer.test(TestAutoServer.java:44)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:806)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+2026-03-05 14:10:42.373824Z jdbc: 
+/**/stat592608.execute("drop table t");
+2026-03-05 14:10:42.374767Z jdbc: 
+/**/conn803197.close();
