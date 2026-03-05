@@ -12,6 +12,7 @@ import org.h2.api.ErrorCode;
 import org.h2.command.QueryScope;
 import org.h2.command.query.Query;
 import org.h2.engine.SessionLocal;
+import org.h2.expression.Expression;
 import org.h2.expression.ExpressionVisitor;
 import org.h2.expression.Parameter;
 import org.h2.index.LateralQueryExpressionIndex;
@@ -19,6 +20,7 @@ import org.h2.index.QueryExpressionIndex;
 import org.h2.index.RegularQueryExpressionIndex;
 import org.h2.message.DbException;
 import org.h2.util.StringUtils;
+import org.h2.value.Value;
 
 /**
  * A derived table.
@@ -58,17 +60,40 @@ public final class DerivedTable extends QueryExpressionTable {
         super(session.getDatabase().getMainSchema(), 0, name);
         setTemporary(true);
         this.topQuery = topQuery;
+        DbException columnNotFound = null;
         try {
             query.prepareExpressions();
         } catch (DbException e) {
             if (e.getErrorCode() == ErrorCode.COLUMN_NOT_FOUND_1) {
-                // The derived table has correlated (outer query) column
-                // references that cannot be resolved yet. Mark it so that a
-                // LateralQueryExpressionIndex is used at execution time.
-                isCorrelated = true;
+                columnNotFound = e;
             } else {
                 throw e;
             }
+        }
+        if (columnNotFound != null) {
+            // A COLUMN_NOT_FOUND_1 error occurred during expression preparation.
+            // This can be either:
+            // (a) a genuine missing column (e.g., SELECT "x" FROM dual)
+            // (b) a reference to a column in an outer query scope (a correlated
+            //     derived table, e.g., WHERE outer_alias.col = inner_table.col)
+            //
+            // Distinguish them by examining the SELECT-list expressions:
+            // - prepareExpressions() optimizes SELECT-list expressions FIRST.
+            //   If the error is in a WHERE/condition (case b), all SELECT-list
+            //   expressions will have been optimized and have known types.
+            // - If the error is in the SELECT list itself (case a), the failing
+            //   expression will have Value.UNKNOWN type.
+            //
+            // If any SELECT-list expression has an unknown type, it is a genuine
+            // error; re-throw. Otherwise, treat as a correlated derived table.
+            ArrayList<Expression> exprs = query.getExpressions();
+            int colCount = query.getColumnCount();
+            for (int i = 0; i < colCount; i++) {
+                if (exprs.get(i).getType().getValueType() == Value.UNKNOWN) {
+                    throw columnNotFound;
+                }
+            }
+            isCorrelated = true;
         }
         try {
             this.querySQL = query.getPlanSQL(DEFAULT_SQL_FLAGS);
