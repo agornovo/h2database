@@ -1,0 +1,66 @@
+2026-03-05 14:13:57.529845Z jdbc: SESSION_PREPARE_READ_PARAMS2 0
+2026-03-05 14:13:57.530317Z jdbc: COMMAND_EXECUTE_QUERY 0
+2026-03-05 14:13:57.530586Z jdbc: RESULT_CLOSE 1
+2026-03-05 14:13:57.530609Z jdbc: COMMAND_CLOSE 0
+2026-03-05 14:13:57.530621Z jdbc: 
+/**/Connection conn807256 = DriverManager.getConnection("jdbc:h2:tcp://10.1.0.213:35439/19cbe591e7a701ad004cf49755e39c6bca8246a890d;AUTO_SERVER=TRUE;MV_STORE=true;MAX_COMPACT_TIME=0;TRACE_LEVEL_FILE=3;TRACE_MAX_FILE_SIZE=8;THROTTLE=1;LOCK_TIMEOUT=50;MAX_MEMORY_UNDO=3;CACHE_TYPE=SOFT_LRU;MAX_MEMORY_ROWS=100;CACHE_SIZE=0;CIPHER=AES;NETWORK_TIMEOUT=100", "SA", "");
+2026-03-05 14:13:57.530674Z jdbc: 
+/**/Statement stat638530 = conn807256.createStatement();
+2026-03-05 14:13:57.530706Z jdbc: 
+/**/ResultSet rs55547340 = stat638530.executeQuery("SELECT MAX(RAND()) FROM SYSTEM_RANGE(1, 100000000)");
+2026-03-05 14:13:57.530723Z jdbc: SESSION_PREPARE_READ_PARAMS2 2
+2026-03-05 14:13:57.530942Z jdbc: COMMAND_EXECUTE_QUERY 2
+2026-03-05 14:13:57.631184Z jdbc: removing server because of exception
+java.net.SocketTimeoutException: Read timed out
+	at java.base/sun.nio.ch.NioSocketImpl.timedRead(NioSocketImpl.java:288)
+	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:314)
+	at java.base/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:355)
+	at java.base/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:808)
+	at java.base/java.net.Socket$SocketInputStream.read(Socket.java:966)
+	at java.base/java.io.BufferedInputStream.fill(BufferedInputStream.java:244)
+	at java.base/java.io.BufferedInputStream.read(BufferedInputStream.java:263)
+	at java.base/java.io.DataInputStream.readInt(DataInputStream.java:381)
+	at org.h2.value.Transfer.readInt(Transfer.java:304)
+	at org.h2.engine.SessionRemote.done(SessionRemote.java:623)
+	at org.h2.command.CommandRemote.executeQuery(CommandRemote.java:181)
+	at org.h2.jdbc.JdbcStatement.executeQuery(JdbcStatement.java:101)
+	at jdk.internal.reflect.GeneratedMethodAccessor8.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.h2.test.TestBase$1.invoke(TestBase.java:1546)
+	at jdk.proxy2/jdk.proxy2.$Proxy3.executeQuery(Unknown Source)
+	at org.h2.test.server.TestAutoServer.testSocketReadTimeout(TestAutoServer.java:139)
+	at org.h2.test.server.TestAutoServer.test(TestAutoServer.java:40)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:806)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+2026-03-05 14:13:57.949070Z jdbc: exception
+org.h2.jdbc.JdbcSQLNonTransientConnectionException: Connection is broken: "session closed" [90067-249]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.engine.SessionRemote.checkClosed(SessionRemote.java:560)
+	at org.h2.engine.SessionRemote.removeServer(SessionRemote.java:485)
+	at org.h2.command.CommandRemote.executeQuery(CommandRemote.java:192)
+	at org.h2.jdbc.JdbcStatement.executeQuery(JdbcStatement.java:101)
+	at jdk.internal.reflect.GeneratedMethodAccessor8.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.h2.test.TestBase$1.invoke(TestBase.java:1546)
+	at jdk.proxy2/jdk.proxy2.$Proxy3.executeQuery(Unknown Source)
+	at org.h2.test.server.TestAutoServer.testSocketReadTimeout(TestAutoServer.java:139)
+	at org.h2.test.server.TestAutoServer.test(TestAutoServer.java:40)
+	at org.h2.test.TestBase.runTest(TestBase.java:147)
+	at org.h2.test.TestAll.addTest(TestAll.java:996)
+	at org.h2.test.TestAll.test(TestAll.java:806)
+	at org.h2.test.TestAll.runTests(TestAll.java:648)
+	at org.h2.test.TestAll.testAll(TestAll.java:552)
+	at org.h2.test.TestAll.run(TestAll.java:493)
+	at org.h2.test.TestAll.main(TestAll.java:437)
+2026-03-05 14:13:57.949220Z jdbc: 
+/**/conn807256.close();

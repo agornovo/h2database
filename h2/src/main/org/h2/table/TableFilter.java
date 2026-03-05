@@ -18,6 +18,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.SessionLocal;
 import org.h2.expression.Expression;
+import org.h2.expression.ExpressionVisitor;
 import org.h2.expression.condition.Comparison;
 import org.h2.expression.condition.ConditionAndOr;
 import org.h2.index.Index;
@@ -693,6 +694,24 @@ public class TableFilter implements ColumnResolver {
         }
         if (join != null) {
             join.mapColumns(resolver, level, outer);
+        }
+        // Propagate outer column resolver into correlated derived tables so that
+        // column references to enclosing queries can be resolved.
+        if (table instanceof DerivedTable && ((DerivedTable) table).isCorrelated()) {
+            DerivedTable dt = (DerivedTable) table;
+            dt.getQuery().mapColumns(resolver, level + 1, outer);
+            // If level == 0, the resolver belongs to the same query as this
+            // lateral derived table. Record it as an outer dependency when it
+            // actually resolves one or more columns in the inner query, so that
+            // the cost estimator can enforce the correct join order.
+            if (level == 0) {
+                TableFilter outerFilter = resolver.getTableFilter();
+                if (outerFilter != null && outerFilter != this
+                        && !dt.getQuery().isEverything(
+                                ExpressionVisitor.getNotFromResolverVisitor(resolver))) {
+                    dt.addOuterDependency(outerFilter);
+                }
+            }
         }
     }
 
