@@ -6,6 +6,7 @@
 package org.h2.table;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.h2.api.ErrorCode;
 import org.h2.command.QueryScope;
@@ -13,6 +14,7 @@ import org.h2.command.query.Query;
 import org.h2.engine.SessionLocal;
 import org.h2.expression.ExpressionVisitor;
 import org.h2.expression.Parameter;
+import org.h2.index.LateralQueryExpressionIndex;
 import org.h2.index.QueryExpressionIndex;
 import org.h2.index.RegularQueryExpressionIndex;
 import org.h2.message.DbException;
@@ -30,6 +32,20 @@ public final class DerivedTable extends QueryExpressionTable {
     private final ArrayList<Parameter> originalParameters;
 
     /**
+     * Whether this derived table has correlated (outer query) column
+     * references. Such references cannot be resolved during construction
+     * and require a {@link LateralQueryExpressionIndex} at execution time.
+     */
+    private boolean isCorrelated;
+
+    /**
+     * Table filters from the immediate enclosing query that this lateral
+     * derived table depends on. Used to enforce correct join ordering so that
+     * this lateral table is always evaluated after its dependencies.
+     */
+    private final HashSet<TableFilter> outerDependencies = new HashSet<>();
+
+    /**
      * Create a derived table out of the given query.
      *
      * @param session the session
@@ -42,7 +58,18 @@ public final class DerivedTable extends QueryExpressionTable {
         super(session.getDatabase().getMainSchema(), 0, name);
         setTemporary(true);
         this.topQuery = topQuery;
-        query.prepareExpressions();
+        try {
+            query.prepareExpressions();
+        } catch (DbException e) {
+            if (e.getErrorCode() == ErrorCode.COLUMN_NOT_FOUND_1) {
+                // The derived table has correlated (outer query) column
+                // references that cannot be resolved yet. Mark it so that a
+                // LateralQueryExpressionIndex is used at execution time.
+                isCorrelated = true;
+            } else {
+                throw e;
+            }
+        }
         try {
             this.querySQL = query.getPlanSQL(DEFAULT_SQL_FLAGS);
             originalParameters = query.getParameters();
@@ -58,8 +85,43 @@ public final class DerivedTable extends QueryExpressionTable {
         }
     }
 
+    /**
+     * Returns whether this derived table has correlated (outer query) column
+     * references, i.e. is a lateral derived table.
+     *
+     * @return {@code true} if this is a correlated (lateral) derived table
+     */
+    public boolean isCorrelated() {
+        return isCorrelated;
+    }
+
+    /**
+     * Records an outer table filter that this lateral derived table depends on.
+     * This is called when {@code mapColumns()} propagates an outer resolver
+     * into this table's query and that resolver actually resolves columns there.
+     *
+     * @param outerFilter the outer table filter that must be evaluated before
+     *                    this lateral derived table
+     */
+    public void addOuterDependency(TableFilter outerFilter) {
+        outerDependencies.add(outerFilter);
+    }
+
+    /**
+     * Returns the set of outer table filters (from the immediate parent query)
+     * that this lateral derived table depends on.
+     *
+     * @return outer filter dependencies, possibly empty
+     */
+    public HashSet<TableFilter> getOuterDependencies() {
+        return outerDependencies;
+    }
+
     @Override
     protected QueryExpressionIndex createIndex(SessionLocal session, int[] masks) {
+        if (isCorrelated) {
+            return new LateralQueryExpressionIndex(this, viewQuery, originalParameters, session);
+        }
         return new RegularQueryExpressionIndex(this, querySQL, originalParameters, session, masks);
     }
 
@@ -67,6 +129,17 @@ public final class DerivedTable extends QueryExpressionTable {
     public boolean isQueryComparable() {
         return super.isQueryComparable()
             && (topQuery == null || topQuery.isEverything(ExpressionVisitor.QUERY_COMPARABLE_VISITOR));
+    }
+
+    @Override
+    public long getMaxDataModificationId() {
+        // Correlated (lateral) derived tables depend on the current row of the
+        // enclosing query, which can change at any time. Always return MAX_VALUE
+        // to prevent caching of result sets that contain this table.
+        if (isCorrelated) {
+            return Long.MAX_VALUE;
+        }
+        return super.getMaxDataModificationId();
     }
 
     @Override
